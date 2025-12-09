@@ -91,6 +91,7 @@ module Crawler
               meta_description: { type: 'text' },
               links: { type: 'keyword' },
               headings: { type: 'text' },
+              # full_html is stored but not indexed for search to save resources
               full_html: { type: 'text', index: false },
               file_name: { type: 'keyword' },
               content_length: { type: 'long' },

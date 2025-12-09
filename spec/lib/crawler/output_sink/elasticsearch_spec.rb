@@ -218,7 +218,7 @@ RSpec.describe(Crawler::OutputSink::Elasticsearch) do
         expect(mappings).to be_a(Hash)
         expect(mappings[:mappings]).to be_a(Hash)
         expect(mappings[:mappings][:properties]).to be_a(Hash)
-        
+
         properties = mappings[:mappings][:properties]
         expect(properties[:headings]).to eq({ type: 'text' })
         expect(properties[:last_crawled_at]).to eq({ type: 'date' })
