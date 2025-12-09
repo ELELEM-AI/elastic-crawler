@@ -95,6 +95,7 @@ module Crawler
               file_name: { type: 'keyword' },
               content_length: { type: 'long' },
               content_type: { type: 'keyword' },
+              _attachment: { type: 'binary' },
               url: { type: 'keyword' },
               url_scheme: { type: 'keyword' },
               url_host: { type: 'keyword' },

@@ -224,6 +224,7 @@ RSpec.describe(Crawler::OutputSink::Elasticsearch) do
         expect(properties[:last_crawled_at]).to eq({ type: 'date' })
         expect(properties[:id]).to eq({ type: 'keyword' })
         expect(properties[:url]).to eq({ type: 'keyword' })
+        expect(properties[:_attachment]).to eq({ type: 'binary' })
       end
     end
 
