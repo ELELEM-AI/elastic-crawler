@@ -212,6 +212,37 @@ RSpec.describe(Crawler::OutputSink::Elasticsearch) do
       end
     end
 
+    describe '#index_mappings' do
+      it 'returns mappings with required fields' do
+        mappings = subject.index_mappings
+        expect(mappings).to be_a(Hash)
+        expect(mappings[:mappings]).to be_a(Hash)
+        expect(mappings[:mappings][:properties]).to be_a(Hash)
+        
+        properties = mappings[:mappings][:properties]
+        expect(properties[:headings]).to eq({ type: 'text' })
+        expect(properties[:last_crawled_at]).to eq({ type: 'date' })
+        expect(properties[:id]).to eq({ type: 'keyword' })
+        expect(properties[:url]).to eq({ type: 'keyword' })
+      end
+    end
+
+    describe '#attempt_index_creation_or_exit' do
+      context 'when creating index with mappings' do
+        before(:each) do
+          allow(es_client_indices).to receive(:create).and_return(true)
+        end
+
+        it 'creates index with mappings' do
+          subject.attempt_index_creation_or_exit
+          expect(es_client_indices).to have_received(:create).with(
+            index: index_name,
+            body: subject.index_mappings
+          )
+        end
+      end
+    end
+
     context 'when config is okay' do
       it 'does not raise an error' do
         expect { subject }.not_to raise_error
