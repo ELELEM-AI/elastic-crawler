@@ -1,4 +1,17 @@
 steps:
+- name: 'python:3.13'
+  id: 'Setup crawler dependencies'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      pip install -q elasticsearch google-cloud-secret-manager
+      python setup.py
+  env:
+    - 'ES_HOST=$_ES_HOST'
+    - 'ES_PORT=$_ES_PORT'
+    - 'ES_API_KEY=$_ES_API_KEY'
+
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build docker image'
   args: ['build', '-t', 'gcr.io/$PROJECT_ID/$_REPO_NAME/$_CR_JOB_NAME', '.']
