@@ -117,22 +117,12 @@ VERTEXAI_EMBEDDINGS_PROCESSOR = {
 }
 
 
-def get_es_client() -> Elasticsearch:
-    ES_HOST = os.environ["ES_HOST"]
-    ES_PORT = os.environ["ES_PORT"]
-    ES_API_KEY = os.environ["ES_API_KEY"]
-    es_client = Elasticsearch(hosts=f"{ES_HOST}:{ES_PORT}", api_key=ES_API_KEY)
-    assert es_client.ping(), "Elasticsearch cluster is not reachable"
-    return es_client
-
-
-def fetch_gcp_secret() -> str:
+def fetch_gcp_secret(secret_name: str) -> str:
     """Fetch secret from Google Secret Manager"""
-    SECRET_NAME = "snippets-api-project-service-account-json"
     SECRET_MANAGER_PROJECT_ID = "rag-query-analytics"
     client = secretmanager.SecretManagerServiceClient()
     secret_version = client.secret_version_path(
-        SECRET_MANAGER_PROJECT_ID, SECRET_NAME, "latest"
+        SECRET_MANAGER_PROJECT_ID, secret_name, "latest"
     )
     response = client.access_secret_version(name=secret_version)
     secret_value = response.payload.data.decode("UTF-8")
@@ -141,6 +131,22 @@ def fetch_gcp_secret() -> str:
     except json.JSONDecodeError:
         raise Exception("Secret is not a valid JSON string")
     return secret_value
+
+
+def get_es_client() -> Elasticsearch:
+    ENV = os.getenv("ENV", "dev")
+    ELASTIC_SECRET = {
+        "prod": "GEO_ELASTIC_PROD",
+        "staging": "GEO_ELASTIC_STAGING",
+        "dev": "GEO_ELASTIC_DEV",
+    }[ENV]
+    elastic_secret_json = fetch_gcp_secret(ELASTIC_SECRET)
+    elastic_secret_dict = json.loads(elastic_secret_json)
+    host = elastic_secret_dict["host"]
+    api_key = elastic_secret_dict["api_key"]
+    es_client = Elasticsearch(hosts=host, api_key=api_key)
+    assert es_client.ping(), "Elasticsearch cluster is not reachable"
+    return es_client
 
 
 def setup_ingest_pipeline(
@@ -171,7 +177,8 @@ def create_vertexai_embedding_inference_endpoint(
     TASK_TYPE = "text_embedding"
     SERVICE_ACCOUNT_PROJECT_ID = "snippets-api-434014"
     SERVICE_ACCOUNT_LOCATION = "us-central1"
-    SERVICE_ACCOUNT_JSON = fetch_gcp_secret()
+    SECRET_NAME = "snippets-api-project-service-account-json"
+    SERVICE_ACCOUNT_JSON = fetch_gcp_secret(SECRET_NAME)
     try:
         es_client.inference.get(task_type=TASK_TYPE, inference_id=inference_id)
         print(f"Inference endpoint '{inference_id}' already exists.")
@@ -181,6 +188,7 @@ def create_vertexai_embedding_inference_endpoint(
             es_client.inference.put_googlevertexai(
                 googlevertexai_inference_id=inference_id,
                 task_type="text_embedding",
+                service="googlevertexai",
                 service_settings={
                     "model_id": EMBEDDING_MODEL_ID,
                     "service_account_json": SERVICE_ACCOUNT_JSON,
@@ -214,6 +222,8 @@ def create_embedding_pipeline(es_client: Elasticsearch) -> bool:
     pipeline_id = "es-crawler-embedding-pipeline"
     description = "Pipeline to generate embeddings for crawled data"
     processors = [VERTEXAI_EMBEDDINGS_PROCESSOR]
+    inference_id = VERTEXAI_EMBEDDINGS_PROCESSOR["inference"]["model_id"]
+    create_vertexai_embedding_inference_endpoint(es_client, inference_id)
     return setup_ingest_pipeline(es_client, pipeline_id, description, processors)
 
 
