@@ -8,9 +8,7 @@ steps:
       pip install -q elasticsearch google-cloud-secret-manager
       python setup.py
   env:
-    - 'ES_HOST=$_ES_HOST'
-    - 'ES_PORT=$_ES_PORT'
-    - 'ES_API_KEY=$_ES_API_KEY'
+    - 'ENV=$_ENV'
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build docker image'
