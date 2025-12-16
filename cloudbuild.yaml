@@ -38,7 +38,7 @@ substitutions:
   _CONFIG_FILE: 'crawl-config.yaml'
   _GCS_BUCKET: 'genai-engine-optimization'
   _REGION: 'europe-west1'
-  _ES_HOST: 'https://geo-dev.es.europe-west1.gcp.cloud.es.io'
+  _ES_HOST: 'https://geo-${_ENV}.es.europe-west1.gcp.cloud.es.io'
   _ES_PORT: '9243'
 
 options:
