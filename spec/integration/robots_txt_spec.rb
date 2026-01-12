@@ -213,4 +213,42 @@ RSpec.describe 'robots.txt support' do
       end
     end
   end
+
+  #-------------------------------------------------------------------------------------------------
+  context 'with bypass_robots_txt enabled' do
+    let(:site) do
+      Faux.site do
+        robots do
+          user_agent '*'
+          disallow '/'
+        end
+
+        page '/' do
+          body do
+            link_to '/restricted-page'
+            link_to '/another-restricted'
+          end
+        end
+
+        page '/restricted-page'
+        page '/another-restricted'
+      end
+    end
+
+    it 'should bypass robots.txt restrictions and crawl all URLs' do
+      results = FauxCrawl.run(site, bypass_robots_txt: true)
+
+      expect(results).to have_only_these_results [
+        mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
+        mock_response(url: 'http://127.0.0.1:9393/restricted-page', status_code: 200),
+        mock_response(url: 'http://127.0.0.1:9393/another-restricted', status_code: 200)
+      ]
+    end
+
+    it 'should still respect robots.txt when bypass is false' do
+      results = FauxCrawl.run(site, bypass_robots_txt: false)
+
+      expect(results).to have_only_these_results []
+    end
+  end
 end
