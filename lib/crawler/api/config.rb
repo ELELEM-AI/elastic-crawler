@@ -54,6 +54,7 @@ module Crawler
         :schedule,             # For scheduled jobs; not used outside of CLI
 
         :robots_txt_service,   # Service to fetch robots.txt
+        :bypass_robots_txt,    # Whether to bypass robots.txt restrictions and crawl everything
         :output_sink,          # The type of output, either :console | :file | :elasticsearch
         :output_dir,           # If writing to the filesystem, the directory to write to
         :output_index,         # If writing to Elasticsearch, the index to write to
@@ -200,6 +201,7 @@ module Crawler
         compression_enabled: true,
         sitemap_discovery_disabled: false,
         head_requests_enabled: false,
+        bypass_robots_txt: false,
 
         extraction_rules: {},
         crawl_rules: {},
@@ -402,7 +404,14 @@ module Crawler
       end
 
       def configure_robots_txt_service!
-        @robots_txt_service ||= Crawler::RobotsTxtService.new(user_agent:) # rubocop:disable Naming/MemoizedInstanceVariableName
+        @robots_txt_service ||= begin # rubocop:disable Naming/MemoizedInstanceVariableName
+          if bypass_robots_txt
+            system_logger.info('bypass_robots_txt is enabled, bypassing robots.txt restrictions')
+            Crawler::RobotsTxtService.always_allow
+          else
+            Crawler::RobotsTxtService.new(user_agent:)
+          end
+        end
       end
 
       def configure_http_header_service!

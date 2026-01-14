@@ -125,5 +125,17 @@ RSpec.describe(Crawler::UrlValidator) do
         end
       end
     end
+
+    context 'when bypass_robots_txt is enabled' do
+      before do
+        allow(crawler_api_config).to receive(:bypass_robots_txt).and_return(true)
+      end
+
+      it 'skips validation and returns ok' do
+        expect(validator).to receive(:validation_ok).with(:robots_txt, /bypass_robots_txt is enabled/)
+        expect(http_executor).not_to receive(:run)
+        validator.validate_robots_txt(crawl_config)
+      end
+    end
   end
 end
