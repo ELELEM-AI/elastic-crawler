@@ -48,13 +48,8 @@ module Crawler
         end
 
         def format_logger(logger_instance, tags = nil)
-          logger_instance.formatter = proc do |_severity, datetime, _progname, msg|
-            timestamp = datetime.strftime('%Y-%m-%dT%H:%M:%S.%LZ')
-            if tags
-              "[#{timestamp}] #{tags} #{msg}\n"
-            else
-              "[#{timestamp}] #{msg}\n"
-            end
+          logger_instance.formatter = proc do |_severity, _datetime, _progname, msg|
+            "#{msg}\n"
           end
         end
 

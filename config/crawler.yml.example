@@ -241,7 +241,7 @@
 #stats_dump_interval: 10
 #
 ## Set a custom crawl ID for this crawler.
-##   Will appear in log messages as [crawl:unique-crawl_id]
+##   Used internally for tracking purposes.
 ##   Default is a random hash value.
 #crawl_id: custom-crawl-id
 #
