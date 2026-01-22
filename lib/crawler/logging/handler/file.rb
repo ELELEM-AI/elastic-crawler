@@ -48,7 +48,7 @@ module Crawler
           # This method is kept for compatibility with existing code
         end
 
-        def format_logger(logger_instance, tags = nil)
+        def format_logger(logger_instance)
           logger_instance.formatter = proc do |_severity, _datetime, _progname, msg|
             "#{msg}\n"
           end
