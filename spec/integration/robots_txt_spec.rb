@@ -256,12 +256,13 @@ RSpec.describe 'robots.txt support' do
         Faux.site do
           robots do
             user_agent '*'
-            disallow '/'
+            disallow '/restricted'
             sitemap '/sitemap.xml'
           end
 
           sitemap '/sitemap.xml' do
             link_to '/sitemap-page'
+            link_to '/restricted-from-sitemap'
           end
 
           page '/' do
@@ -272,6 +273,7 @@ RSpec.describe 'robots.txt support' do
 
           page '/restricted-page'
           page '/sitemap-page'
+          page '/restricted-from-sitemap'
         end
       end
 
@@ -281,16 +283,21 @@ RSpec.describe 'robots.txt support' do
         expect(results).to have_only_these_results [
           mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
           mock_response(url: 'http://127.0.0.1:9393/restricted-page', status_code: 200),
-          mock_response(url: 'http://127.0.0.1:9393/sitemap-page', status_code: 200)
+          mock_response(url: 'http://127.0.0.1:9393/sitemap-page', status_code: 200),
+          mock_response(url: 'http://127.0.0.1:9393/restricted-from-sitemap', status_code: 200)
         ]
       end
 
-      it 'should discover sitemaps from robots.txt when bypass is disabled' do
+      it 'should discover sitemaps from robots.txt and respect restrictions when bypass is disabled' do
         results = FauxCrawl.run(site_with_sitemap, bypass_robots_txt: false)
 
-        # With bypass disabled, the / and /restricted-page are blocked by robots.txt
-        # but sitemap URLs should still be discovered and crawled
+        # With bypass disabled:
+        # - / is allowed and crawled
+        # - /restricted-page is found from / but blocked by robots.txt
+        # - /sitemap-page is discovered from sitemap and allowed (no restriction)
+        # - /restricted-from-sitemap is discovered from sitemap but blocked by robots.txt
         expect(results).to have_only_these_results [
+          mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
           mock_response(url: 'http://127.0.0.1:9393/sitemap-page', status_code: 200)
         ]
       end
