@@ -90,7 +90,10 @@ module Crawler
       end
     end
 
-    # Service that bypasses robots.txt restrictions but still extracts sitemaps
+    # Service that bypasses robots.txt restrictions (Disallow, User-agent, Crawl-delay)
+    # while still fetching, parsing robots.txt and extracting sitemaps.
+    # This is used when bypass_robots_txt is enabled, ensuring sitemap discovery
+    # continues to work even when crawling restrictions are ignored.
     class BypassRestrictions < RobotsTxtService
       def url_disallowed_outcome(*)
         DisallowedOutcome.new(false, nil)

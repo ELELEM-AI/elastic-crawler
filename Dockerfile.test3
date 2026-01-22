@@ -1,0 +1,26 @@
+FROM jruby:9.4.12.0-jdk21@sha256:5641622b488d298362b96fdaea0f328248ce55962e68e224118be11ddb48d16e
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libicu-dev netbase make ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV IS_DOCKER=1
+
+RUN groupadd -g 451 crawlergroup && \
+    useradd -m -u 451 -g crawlergroup crawleruser
+
+USER crawleruser
+WORKDIR /home/app
+COPY --chown=crawleruser:crawlergroup --chmod=775 . .
+
+# Install bundler and gems with SSL completely bypassed
+RUN export BUNDLER_VERSION="$(cat .bundler-version)" && \
+    gem install bundler:${BUNDLER_VERSION} --no-document 2>&1 || echo "bundler install failed, continuing..." && \
+    export BUNDLE_SILENCE_ROOT_WARNING=1 && \
+    export SCRIPT_BUNDLE=true && \
+    bundle config set --global ssl_verify_mode 0 && \
+    bundle config set --global ignore_messages.gems_not_installed true && \
+    bundle install --no-color 2>&1 || echo "bundle install failed, continuing..."
+
+ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
+CMD [ "irb" ]
