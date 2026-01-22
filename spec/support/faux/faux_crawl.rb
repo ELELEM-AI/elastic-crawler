@@ -45,7 +45,7 @@ class FauxCrawl # rubocop:disable Metrics/ClassLength
 
   attr_reader :options, :sites, :site_containers, :timeouts, :content_extraction, :default_encoding, :crawl_id,
               :url_queue, :auth, :user_agent, :url, :seed_urls, :sitemap_urls, :domain_allowlist, :results,
-              :expect_success
+              :expect_success, :bypass_robots_txt
 
   delegate :crawl, to: :results
 
@@ -63,6 +63,7 @@ class FauxCrawl # rubocop:disable Metrics/ClassLength
     @domain_allowlist = seed_urls.map { |url| Crawler::Data::URL.parse(url).site }
     @content_extraction = options.fetch(:content_extraction, { enabled: false, mime_types: [] })
     @default_encoding = options[:default_encoding]
+    @bypass_robots_txt = options.fetch(:bypass_robots_txt, false)
     @timeouts = options.fetch(:timeouts, {}).slice(
       :connect_timeout, :socket_timeout, :request_timeout
     ).compact
@@ -169,7 +170,8 @@ class FauxCrawl # rubocop:disable Metrics/ClassLength
       http_auth_allowed: true,
       loopback_allowed: true,
       private_networks_allowed: true,
-      url_queue: url_queue
+      url_queue: url_queue,
+      bypass_robots_txt: bypass_robots_txt
     }
     config.merge!(timeouts)
     config[:default_encoding] = default_encoding if default_encoding

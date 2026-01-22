@@ -407,7 +407,7 @@ module Crawler
         @robots_txt_service ||= begin # rubocop:disable Naming/MemoizedInstanceVariableName
           if bypass_robots_txt
             system_logger.info('bypass_robots_txt is enabled, bypassing robots.txt restrictions')
-            Crawler::RobotsTxtService.always_allow
+            Crawler::RobotsTxtService::BypassRestrictions.new(user_agent:)
           else
             Crawler::RobotsTxtService.new(user_agent:)
           end

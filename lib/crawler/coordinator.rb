@@ -155,9 +155,6 @@ module Crawler
 
     # Loads robots.txt for each configured domain and registers it
     def load_robots_txts
-      # Skip loading robots.txt if bypass is enabled
-      return if config.bypass_robots_txt
-
       config.domain_allowlist.each do |domain|
         next if config.robots_txt_service.registered?(domain)
 
