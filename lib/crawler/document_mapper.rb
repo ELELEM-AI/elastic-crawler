@@ -66,7 +66,7 @@ module Crawler
     end
 
     def html_fields(crawl_result) # rubocop:disable Metrics/AbcSize
-      remove_empty_values(
+      normalize_field_values(
         title: crawl_result.document_title(limit: config.max_title_size),
         body: crawl_result.document_body(limit: config.max_body_size),
         meta_keywords: crawl_result.meta_keywords(limit: config.max_keywords_size),
@@ -78,7 +78,7 @@ module Crawler
     end
 
     def binary_file_fields(crawl_result)
-      remove_empty_values(
+      normalize_field_values(
         file_name: crawl_result.file_name,
         content_length: crawl_result.content_length,
         content_type: crawl_result.content_type,
@@ -89,7 +89,7 @@ module Crawler
     def url_components(url)
       url = Crawler::Data::URL.parse(url.to_s) unless url.is_a?(Crawler::Data::URL)
       path_components = url.path.split('/')
-      remove_empty_values(
+      normalize_field_values(
         url: url.to_s,
         url_scheme: url.scheme,
         url_host: url.host,
@@ -109,6 +109,36 @@ module Crawler
     # Accepts a hash and removes empty values from it
     def remove_empty_values(hash_object)
       hash_object.tap { |h| h.reject! { |_, value| value.blank? } }
+    end
+
+    # Normalizes field values to ensure text/keyword fields have valid values.
+    # For text/keyword fields: converts nil/blank to empty string or empty array.
+    # For numeric fields: removes if nil/blank.
+    def normalize_field_values(hash_object)
+      # Define which fields are text/keyword types that should use empty defaults
+      text_keyword_fields = %i[
+        title body meta_keywords meta_description full_html
+        file_name content_type
+        url url_scheme url_host url_path url_path_dir1 url_path_dir2 url_path_dir3
+      ]
+      
+      # Array fields that should default to empty arrays
+      array_fields = %i[links headings]
+
+      hash_object.tap do |h|
+        h.each do |key, value|
+          if text_keyword_fields.include?(key)
+            # Text/keyword fields: use empty string if blank
+            h[key] = '' if value.blank?
+          elsif array_fields.include?(key)
+            # Array fields: use empty array if blank
+            h[key] = [] if value.blank?
+          elsif value.blank?
+            # Numeric and other fields: remove if blank
+            h.delete(key)
+          end
+        end
+      end
     end
   end
 end
