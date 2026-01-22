@@ -21,9 +21,8 @@ module Crawler
           # logger instance setup
           logger_instance = Logger.new(filename, rotation_period)
           logger_instance.level = log_level
-          # Set base format to include timestamp
+          # Set a simple format to output only the message
           format_logger(logger_instance)
-          # convert logger instance to a StaticallyTaggedLogger so we can support tagging
           @logger_instance = logger_instance
         end
 
@@ -45,8 +44,8 @@ module Crawler
         end
 
         def add_tags(*tags)
-          # this function re-formats the log format with the provided tags
-          format_logger(@logger_instance, tags.join(' '))
+          # Tags are ignored in the simplified log format
+          # This method is kept for compatibility with existing code
         end
 
         def format_logger(logger_instance, tags = nil)
