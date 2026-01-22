@@ -106,11 +106,6 @@ module Crawler
       Crawler::ContentEngine::Extractor.extract(rulesets, crawl_result).symbolize_keys
     end
 
-    # Accepts a hash and removes empty values from it
-    def remove_empty_values(hash_object)
-      hash_object.tap { |h| h.reject! { |_, value| value.blank? } }
-    end
-
     # Normalizes field values to ensure text/keyword fields have valid values.
     # For text/keyword fields: converts nil/blank to empty string or empty array.
     # For numeric fields: removes if nil/blank.
@@ -121,7 +116,7 @@ module Crawler
         file_name content_type
         url url_scheme url_host url_path url_path_dir1 url_path_dir2 url_path_dir3
       ]
-      
+
       # Array fields that should default to empty arrays
       array_fields = %i[links headings]
 
