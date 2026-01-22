@@ -90,6 +90,13 @@ module Crawler
       end
     end
 
+    # Service that bypasses robots.txt restrictions but still extracts sitemaps
+    class BypassRestrictions < RobotsTxtService
+      def url_disallowed_outcome(*)
+        DisallowedOutcome.new(false, nil)
+      end
+    end
+
     DisallowedOutcome = Struct.new(:disallowed?, :disallow_message) do
       def allowed?
         !disallowed?
