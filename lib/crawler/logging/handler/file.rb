@@ -43,7 +43,7 @@ module Crawler
           end
         end
 
-        def add_tags(*tags)
+        def add_tags(*_tags)
           # Tags are ignored in the simplified log format
           # This method is kept for compatibility with existing code
         end

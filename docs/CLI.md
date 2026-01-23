@@ -102,7 +102,7 @@ field in your crawler config.
 
 Initialized an in-memory URL queue for up to 10000 URLs
 ... // logs truncated for brevity
-Finished a crawl. Result: failure; Successfully finished the primary crawl with an empty crawl queue |
+Finished a crawl. Result: failure; Successfully finished the primary crawl with an empty crawl queue
 
 ---- URL Test Results ----
 - Attempted to crawl https://www.speedhunters.com/2025/01/project-964-hitting-the-touge-for-the-first-time-in-rwb-form/
