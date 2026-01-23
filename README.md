@@ -68,7 +68,7 @@ docker run \
 
 The `-v "$(pwd)":/config` flag maps your current directory to the container's `/config` directory, making your config file available to the crawler.
 
-✅ **Success check**: You should see HTML content from `example.com` printed to your console, ending with `[primary] Finished a crawl. Result: success;`
+✅ **Success check**: You should see HTML content from `example.com` printed to your console, ending with `Finished a crawl. Result: success;`
 
 #### Step 2: Get your Elasticsearch details
 

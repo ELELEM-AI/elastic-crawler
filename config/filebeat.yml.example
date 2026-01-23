@@ -20,12 +20,6 @@ filebeat.inputs:
     - "/path/to/opencrawler/crawler_system.log"
   fields:
     type: "system"
-  processors:
-    - dissect:
-        tokenizer: "[%{@timestamp}] [crawl:%{crawl_id}] [%{crawl_stage}] %{message}"
-        target_prefix: ""
-        overwrite_keys: true
-        trim_values: all
 
 setup.template.enabled: true
 setup.template.name: "filebeat"
