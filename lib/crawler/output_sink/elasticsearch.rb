@@ -75,8 +75,41 @@ module Crawler
 
       def attempt_index_creation_or_exit
         # helper method for verify_output_index
-        raise Errors::ExitIfUnableToCreateIndex, system_logger.info("Failed to create #{config.output_index}") unless
-          client.indices.create(index: config.output_index)
+        unless client.indices.create(index: config.output_index, body: index_mappings)
+          system_logger.info("Failed to create #{config.output_index}")
+          raise Errors::ExitIfUnableToCreateIndex, "Failed to create index #{config.output_index}"
+        end
+      end
+
+      def index_mappings
+        {
+          mappings: {
+            properties: {
+              id: { type: 'keyword' },
+              last_crawled_at: { type: 'date' },
+              title: { type: 'text' },
+              body: { type: 'text' },
+              meta_keywords: { type: 'text' },
+              meta_description: { type: 'text' },
+              links: { type: 'keyword' },
+              headings: { type: 'text' },
+              # full_html is stored but not indexed for search to save resources
+              full_html: { type: 'text', index: false },
+              file_name: { type: 'keyword' },
+              content_length: { type: 'long' },
+              content_type: { type: 'keyword' },
+              _attachment: { type: 'binary' },
+              url: { type: 'keyword' },
+              url_scheme: { type: 'keyword' },
+              url_host: { type: 'keyword' },
+              url_port: { type: 'integer' },
+              url_path: { type: 'text' },
+              url_path_dir1: { type: 'keyword' },
+              url_path_dir2: { type: 'keyword' },
+              url_path_dir3: { type: 'keyword' }
+            }
+          }
+        }
       end
 
       def write(crawl_result)

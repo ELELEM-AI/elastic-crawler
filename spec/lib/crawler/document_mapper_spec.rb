@@ -247,4 +247,40 @@ RSpec.describe(Crawler::DocumentMapper) do
       end
     end
   end
+
+  describe '#normalize_field_values' do
+    it 'converts blank text fields to empty strings' do
+      input = { title: nil, body: '', url: 'http://example.com' }
+      result = subject.send(:normalize_field_values, input)
+
+      expect(result[:title]).to eq('')
+      expect(result[:body]).to eq('')
+      expect(result[:url]).to eq('http://example.com')
+    end
+
+    it 'converts blank array fields to empty arrays' do
+      input = { links: nil, headings: [] }
+      result = subject.send(:normalize_field_values, input)
+
+      expect(result[:links]).to eq([])
+      expect(result[:headings]).to eq([])
+    end
+
+    it 'removes blank numeric fields' do
+      input = { content_length: nil, url_port: 80 }
+      result = subject.send(:normalize_field_values, input)
+
+      expect(result).not_to have_key(:content_length)
+      expect(result[:url_port]).to eq(80)
+    end
+
+    it 'preserves non-blank values' do
+      input = { title: 'Test', links: ['http://example.com'], content_length: 1024 }
+      result = subject.send(:normalize_field_values, input)
+
+      expect(result[:title]).to eq('Test')
+      expect(result[:links]).to eq(['http://example.com'])
+      expect(result[:content_length]).to eq(1024)
+    end
+  end
 end
