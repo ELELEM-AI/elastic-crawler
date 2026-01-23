@@ -75,8 +75,10 @@ module Crawler
 
       def attempt_index_creation_or_exit
         # helper method for verify_output_index
-        raise Errors::ExitIfUnableToCreateIndex, system_logger.info("Failed to create #{config.output_index}") unless
-          client.indices.create(index: config.output_index, body: index_mappings)
+        unless client.indices.create(index: config.output_index, body: index_mappings)
+          system_logger.info("Failed to create #{config.output_index}")
+          raise Errors::ExitIfUnableToCreateIndex, "Failed to create index #{config.output_index}"
+        end
       end
 
       def index_mappings
