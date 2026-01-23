@@ -11,6 +11,11 @@ module Crawler
     extend ActiveSupport::Concern
 
     def validate_robots_txt(_config) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # Skip robots.txt validation if bypass is enabled
+      if crawler_api_config.bypass_robots_txt
+        return validation_ok(:robots_txt, 'robots.txt validation skipped (bypass_robots_txt is enabled).')
+      end
+
       # Fetch robots.txt using the standard Crawler HTTP executor
       crawl_result = http_executor.run(
         Crawler::Data::CrawlTask.new(

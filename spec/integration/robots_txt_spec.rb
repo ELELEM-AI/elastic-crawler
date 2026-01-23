@@ -213,4 +213,94 @@ RSpec.describe 'robots.txt support' do
       end
     end
   end
+
+  #-------------------------------------------------------------------------------------------------
+  context 'with bypass_robots_txt enabled' do
+    let(:site) do
+      Faux.site do
+        robots do
+          user_agent '*'
+          disallow '/'
+        end
+
+        page '/' do
+          body do
+            link_to '/restricted-page'
+            link_to '/another-restricted'
+          end
+        end
+
+        page '/restricted-page'
+        page '/another-restricted'
+      end
+    end
+
+    it 'should bypass robots.txt restrictions and crawl all URLs' do
+      results = FauxCrawl.run(site, bypass_robots_txt: true)
+
+      expect(results).to have_only_these_results [
+        mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
+        mock_response(url: 'http://127.0.0.1:9393/restricted-page', status_code: 200),
+        mock_response(url: 'http://127.0.0.1:9393/another-restricted', status_code: 200)
+      ]
+    end
+
+    it 'should still respect robots.txt when bypass is false' do
+      results = FauxCrawl.run(site, bypass_robots_txt: false)
+
+      expect(results).to have_only_these_results []
+    end
+
+    context 'with sitemap in robots.txt' do
+      let(:site_with_sitemap) do
+        Faux.site do
+          robots do
+            user_agent '*'
+            disallow '/restricted'
+            sitemap '/sitemap.xml'
+          end
+
+          sitemap '/sitemap.xml' do
+            link_to '/sitemap-page'
+            link_to '/restricted-from-sitemap'
+          end
+
+          page '/' do
+            body do
+              link_to '/restricted-page'
+            end
+          end
+
+          page '/restricted-page'
+          page '/sitemap-page'
+          page '/restricted-from-sitemap'
+        end
+      end
+
+      it 'should discover sitemaps from robots.txt even when bypass is enabled' do
+        results = FauxCrawl.run(site_with_sitemap, bypass_robots_txt: true)
+
+        expect(results).to have_only_these_results [
+          mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
+          mock_response(url: 'http://127.0.0.1:9393/restricted-page', status_code: 200),
+          mock_response(url: 'http://127.0.0.1:9393/sitemap-page', status_code: 200),
+          mock_response(url: 'http://127.0.0.1:9393/restricted-from-sitemap', status_code: 200)
+        ]
+      end
+
+      it 'should discover sitemaps from robots.txt and respect restrictions when bypass is disabled' do
+        results = FauxCrawl.run(site_with_sitemap, bypass_robots_txt: false)
+
+        # With bypass disabled:
+        # - / is allowed and crawled
+        # - /restricted-page is found from / but blocked by robots.txt
+        # - /sitemap-page is discovered from sitemap and allowed (no restriction)
+        # - /restricted-from-sitemap is discovered from sitemap but blocked by robots.txt
+        expect(results).to have_only_these_results [
+          mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
+          mock_response(url: 'http://127.0.0.1:9393/sitemap-page', status_code: 200)
+        ]
+      end
+    end
+  end
 end

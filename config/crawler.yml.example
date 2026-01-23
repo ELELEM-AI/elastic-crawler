@@ -153,6 +153,11 @@
 ##   Default is false
 #head_requests_enabled: false
 #
+## Bypass robots.txt restrictions and crawl all URLs regardless of robots.txt rules.
+##   When enabled, the crawler will ignore all robots.txt disallow rules.
+##   Default is false (respects robots.txt).
+#bypass_robots_txt: false
+#
 ## Set a custom User-agent name for the requests Open Crawler makes.
 ##   Default is Elastic-Crawler (crawler-version-number-here).
 ##   Ex:   Elastic-Crawler (0.3.0)

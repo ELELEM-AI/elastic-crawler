@@ -79,3 +79,4 @@ script/licenses/**/_downloaded_*-LICENSE.txt
 bin/container-structure-test
 .artifacts
 .buildkite/publish/container-structure-test.yaml
+__pycache__

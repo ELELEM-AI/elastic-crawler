@@ -344,5 +344,30 @@ RSpec.describe(Crawler::API::Config) do
         end
       end
     end
+
+    describe 'bypass_robots_txt configuration' do
+      let(:domains) { [{ url: 'https://example.com' }] }
+
+      it 'defaults to false' do
+        config = Crawler::API::Config.new(domains:)
+        expect(config.bypass_robots_txt).to eq(false)
+      end
+
+      it 'can be set to true' do
+        config = Crawler::API::Config.new(domains:, bypass_robots_txt: true)
+        expect(config.bypass_robots_txt).to eq(true)
+      end
+
+      it 'uses BypassRestrictions service when bypass is enabled' do
+        config = Crawler::API::Config.new(domains:, bypass_robots_txt: true)
+        expect(config.robots_txt_service).to be_a(Crawler::RobotsTxtService::BypassRestrictions)
+      end
+
+      it 'uses regular RobotsTxtService when bypass is disabled' do
+        config = Crawler::API::Config.new(domains:, bypass_robots_txt: false)
+        expect(config.robots_txt_service).to be_a(Crawler::RobotsTxtService)
+        expect(config.robots_txt_service).not_to be_a(Crawler::RobotsTxtService::BypassRestrictions)
+      end
+    end
   end
 end
