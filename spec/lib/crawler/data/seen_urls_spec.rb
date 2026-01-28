@@ -49,6 +49,18 @@ RSpec.describe(Crawler::Data::SeenUrls) do
       expect(seen_urls.content_count).to eq(2)
       expect(seen_urls.count).to eq(3)
     end
+
+    it 'does not increment content count when URL is first added as sitemap then as content' do
+      # First, add URL as sitemap
+      expect(seen_urls.add?(url1, type: :sitemap)).to be(true)
+      expect(seen_urls.content_count).to eq(0)
+      expect(seen_urls.count).to eq(1)
+      
+      # Try to add the same URL as content - should return false and not increment content_count
+      expect(seen_urls.add?(url1, type: :content)).to be(false)
+      expect(seen_urls.content_count).to eq(0)
+      expect(seen_urls.count).to eq(1)
+    end
   end
 
   describe '#count' do

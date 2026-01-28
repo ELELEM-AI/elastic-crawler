@@ -43,8 +43,9 @@ module Crawler
       # Returns +false+ if we have already seen this URL
       def add?(url, type: nil)
         hash = url_hash(url)
-        @content_urls.add?(hash) if type == :content
-        !!@seen_urls.add?(hash)
+        new_url = @seen_urls.add?(hash)
+        @content_urls.add?(hash) if type == :content && new_url
+        !!new_url
       end
 
       private
