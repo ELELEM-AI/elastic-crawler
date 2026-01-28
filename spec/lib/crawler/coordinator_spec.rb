@@ -497,6 +497,34 @@ RSpec.describe(Crawler::Coordinator) do
         )
         expect { add_urls_to_backlog([url]) }.to_not change { seen_urls.count } # rubocop:disable Lint/AmbiguousBlockAssociation
       end
+
+      it 'should allow sitemap URLs even when content URL limit is reached' do
+        allow(events).to receive(:url_seed)
+        allow(events).to receive(:url_discover)
+
+        # Reach the content limit with content URLs
+        upto_limit_urls = (1..limit).map { |i| Crawler::Data::URL.parse(seed_url).join("/foo-#{i}") }
+        add_urls_to_backlog(upto_limit_urls)
+
+        # Sitemap URLs should still be allowed
+        sitemap_urls = (1..3).map { |i| Crawler::Data::URL.parse(seed_url).join("/sitemap-#{i}.xml") }
+        
+        expect(events).to receive(:url_seed).exactly(3).times
+        expect(events).to receive(:url_discover).exactly(3).times
+        
+        coordinator.send(
+          :add_urls_to_backlog,
+          urls: sitemap_urls,
+          type: :sitemap,
+          source_type: :sitemap,
+          crawl_depth: 1
+        )
+        
+        # All sitemap URLs should be added even though content limit was reached
+        expect(crawl_queue.length).to eq(limit + 3)
+        expect(seen_urls.content_count).to eq(limit)
+        expect(seen_urls.count).to eq(limit + 3)
+      end
     end
 
     it 'should deduplicate URLs (using normalized URL versions)' do
