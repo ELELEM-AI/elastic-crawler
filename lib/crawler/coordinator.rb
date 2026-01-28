@@ -703,8 +703,9 @@ module Crawler
         return :deny
       end
 
-      # Check if we have reached the limit on the number of unique URLs we have seen
-      if seen_urls.count >= config.max_unique_url_count
+      # Check if we have reached the limit on the number of unique content URLs we have seen
+      # Note: Only content URLs are counted against the limit, not sitemap/robots.txt URLs
+      if type == :content && seen_urls.content_count >= config.max_unique_url_count
         events.url_discover_denied(**discover_event.merge(deny_reason: :too_many_unique_links))
         return :deny
       end
@@ -712,7 +713,7 @@ module Crawler
       # Skip URLs we have already seen before (and enqueued for processing)
       # Warning: This should be the last check since it adds the URL to the seen_urls and
       #          we don't want to add a URL as seen if we could deny it afterwards
-      unless seen_urls.add?(url)
+      unless seen_urls.add?(url, type:)
         events.url_discover_denied(**discover_event.merge(deny_reason: :already_seen))
         return :deny
       end

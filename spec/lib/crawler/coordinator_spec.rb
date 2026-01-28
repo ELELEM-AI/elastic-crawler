@@ -496,6 +496,35 @@ RSpec.describe(Crawler::Coordinator) do
           )
         )
         expect { add_urls_to_backlog([url]) }.to_not change { seen_urls.count } # rubocop:disable Lint/AmbiguousBlockAssociation
+        expect { add_urls_to_backlog([url]) }.to_not change { seen_urls.content_count } # rubocop:disable Lint/AmbiguousBlockAssociation
+      end
+
+      it 'should allow sitemap URLs even when content URL limit is reached' do
+        allow(events).to receive(:url_seed)
+        allow(events).to receive(:url_discover)
+
+        # Reach the content limit with content URLs
+        upto_limit_urls = (1..limit).map { |i| Crawler::Data::URL.parse(seed_url).join("/foo-#{i}") }
+        add_urls_to_backlog(upto_limit_urls)
+
+        # Sitemap URLs should still be allowed
+        sitemap_urls = (1..3).map { |i| Crawler::Data::URL.parse(seed_url).join("/sitemap-#{i}.xml") }
+        
+        expect(events).to receive(:url_seed).exactly(3).times
+        expect(events).to receive(:url_discover).exactly(3).times
+        
+        coordinator.send(
+          :add_urls_to_backlog,
+          urls: sitemap_urls,
+          type: :sitemap,
+          source_type: :sitemap,
+          crawl_depth: 1
+        )
+        
+        # All sitemap URLs should be added even though content limit was reached
+        expect(crawl_queue.length).to eq(limit + 3)
+        expect(seen_urls.content_count).to eq(limit)
+        expect(seen_urls.count).to eq(limit + 3)
       end
     end
 
@@ -707,7 +736,7 @@ RSpec.describe(Crawler::Coordinator) do
     end
 
     it 'should deny URLs we have already seen' do
-      expect(seen_urls).to receive(:add?).with(example_url).and_return(false)
+      expect(seen_urls).to receive(:add?).with(example_url, type: nil).and_return(false)
       expect_denied_with_reason(example_url, :already_seen)
     end
 
@@ -724,9 +753,35 @@ RSpec.describe(Crawler::Coordinator) do
       expect(check_discovered_url(example_url, crawl_depth: 1000)).to eq(:deny)
     end
 
-    it 'should blank-deny URLs after we reach a limit on the number of unique URLs we have seen' do
-      allow(seen_urls).to receive(:count).and_return(coordinator.config.max_unique_url_count + 1)
+    it 'should blank-deny URLs after we reach a limit on the number of unique content URLs we have seen' do
+      allow(seen_urls).to receive(:content_count).and_return(coordinator.config.max_unique_url_count + 1)
       expect_denied_with_reason(example_url, :too_many_unique_links)
+    end
+
+    it 'should NOT count sitemap URLs against the max_unique_url_count limit' do
+      # Mock the content_count to be at limit
+      allow(seen_urls).to receive(:content_count).and_return(coordinator.config.max_unique_url_count)
+      # Mock add? to return true (URL is new)
+      allow(seen_urls).to receive(:add?).and_return(true)
+      
+      sitemap_url = Crawler::Data::URL.parse('http://example.com/sitemap.xml')
+      
+      # Sitemap URLs should NOT be denied even when content limit is reached
+      result = check_discovered_url(sitemap_url, type: :sitemap, crawl_depth: 1)
+      expect(result).to eq(:allow)
+    end
+
+    it 'should NOT count robots.txt URLs against the max_unique_url_count limit' do
+      # Mock the content_count to be at limit
+      allow(seen_urls).to receive(:content_count).and_return(coordinator.config.max_unique_url_count)
+      # Mock add? to return true (URL is new)
+      allow(seen_urls).to receive(:add?).and_return(true)
+      
+      robots_url = Crawler::Data::URL.parse('http://example.com/robots.txt')
+      
+      # Robots.txt URLs should NOT be denied even when content limit is reached
+      result = check_discovered_url(robots_url, type: :robots_txt, crawl_depth: 1)
+      expect(result).to eq(:allow)
     end
   end
 
