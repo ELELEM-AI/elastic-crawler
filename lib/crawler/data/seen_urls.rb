@@ -28,7 +28,9 @@ module Crawler
       end
 
       def delete(url)
-        @seen_urls.delete(url_hash(url))
+        hash = url_hash(url)
+        @seen_urls.delete(hash)
+        @content_urls.delete(hash)
       end
 
       # A method called when the crawler needs to stop and persist its state

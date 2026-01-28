@@ -496,6 +496,7 @@ RSpec.describe(Crawler::Coordinator) do
           )
         )
         expect { add_urls_to_backlog([url]) }.to_not change { seen_urls.count } # rubocop:disable Lint/AmbiguousBlockAssociation
+        expect { add_urls_to_backlog([url]) }.to_not change { seen_urls.content_count } # rubocop:disable Lint/AmbiguousBlockAssociation
       end
 
       it 'should allow sitemap URLs even when content URL limit is reached' do
@@ -735,7 +736,7 @@ RSpec.describe(Crawler::Coordinator) do
     end
 
     it 'should deny URLs we have already seen' do
-      expect(seen_urls).to receive(:add?).with(example_url).and_return(false)
+      expect(seen_urls).to receive(:add?).with(example_url, type: nil).and_return(false)
       expect_denied_with_reason(example_url, :already_seen)
     end
 

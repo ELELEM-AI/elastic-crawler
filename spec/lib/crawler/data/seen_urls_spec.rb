@@ -28,6 +28,13 @@ RSpec.describe(Crawler::Data::SeenUrls) do
       expect(seen_urls.count).to eq(1)
     end
 
+    it 'does not increment content count when same content URL is added twice' do
+      seen_urls.add?(url1, type: :content)
+      expect(seen_urls.add?(url1, type: :content)).to be(false)
+      expect(seen_urls.content_count).to eq(1)
+      expect(seen_urls.count).to eq(1)
+    end
+
     it 'does not increment content count for sitemap URLs' do
       expect(seen_urls.add?(url3, type: :sitemap)).to be(true)
       expect(seen_urls.content_count).to eq(0)
@@ -92,6 +99,13 @@ RSpec.describe(Crawler::Data::SeenUrls) do
       seen_urls.add?(url1)
       seen_urls.delete(url1)
       expect(seen_urls.count).to eq(0)
+    end
+
+    it 'removes content URL from both seen_urls and content_urls' do
+      seen_urls.add?(url1, type: :content)
+      seen_urls.delete(url1)
+      expect(seen_urls.count).to eq(0)
+      expect(seen_urls.content_count).to eq(0)
     end
   end
 end
