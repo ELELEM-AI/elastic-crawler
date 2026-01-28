@@ -395,7 +395,7 @@ module Crawler
           message: output_crawl_result_outcome.message
         )
       elsif crawl_result.redirect?
-        crawl_task_progress(crawl_task, 'skipping ingestion of redirect')
+        crawl_task_progress(crawl_task, "skipping ingestion of redirect (#{crawl_result.location})")
         extracted_event[:message] = "Crawler was redirected to #{crawl_result.location}"
       elsif crawl_task.content?
         crawl_task_progress(crawl_task, 'ingesting the result')
