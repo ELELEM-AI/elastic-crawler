@@ -126,6 +126,53 @@ RSpec.describe(Crawler::EventGenerator) do
     end
   end
 
+  describe '#url_extracted' do
+    let(:url) { Crawler::Data::URL.parse('http://example.com/page') }
+    let(:system_logger_io) { StringIO.new }
+
+    before do
+      allow(events).to receive(:system_logger).and_return(Logger.new(system_logger_io))
+      allow(events).to receive(:output_event)
+    end
+
+    context 'when extraction is denied' do
+      let(:deny_reason) { :rule_engine_denied }
+      let(:message) { 'Denied by crawl rule: some-rule' }
+
+      it 'should write denial reason to system logger with WARN severity' do
+        events.url_extracted(
+          url:,
+          type: :denied,
+          outcome: :denied,
+          start_time: Time.now,
+          end_time: Time.now,
+          duration: 0,
+          deny_reason:,
+          message:
+        )
+
+        expected_message = "Extraction denied for '#{url}'. Reason: #{deny_reason}. #{message}"
+        expect(system_logger_io.string).to match(/WARN -- : #{Regexp.escape(expected_message)}/)
+      end
+    end
+
+    context 'when extraction is allowed' do
+      it 'should write to system logger with DEBUG severity' do
+        events.url_extracted(
+          url:,
+          type: :allowed,
+          outcome: :success,
+          start_time: Time.now,
+          end_time: Time.now,
+          duration: 0
+        )
+
+        expected_message = "Extracted content from '#{url}' with outcome 'success'"
+        expect(system_logger_io.string).to match(/DEBUG -- : #{Regexp.escape(expected_message)}/)
+      end
+    end
+  end
+
   describe '#crawl_status' do
     let(:crawl_status) do
       {
