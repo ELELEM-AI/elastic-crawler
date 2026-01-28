@@ -206,7 +206,7 @@ module Crawler
 
     def url_extracted(url:, type:, outcome:, start_time:, end_time:, duration:, message: nil, deny_reason: nil)
       # Log to console with appropriate severity
-      if type == :denied && deny_reason
+      if type == :denied
         system_logger.warn("Extraction denied for '#{url}'. Reason: #{deny_reason}. #{message}")
       else
         system_logger.debug("Extracted content from '#{url}' with outcome '#{outcome}'")
