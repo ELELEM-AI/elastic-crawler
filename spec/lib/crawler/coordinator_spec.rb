@@ -884,5 +884,71 @@ RSpec.describe(Crawler::Coordinator) do
         coordinator.send(:enqueue_sitemaps)
       end
     end
+
+    context 'when depth is 1, sitemap discovery is enabled, and no sitemap found' do
+      let(:sitemap_urls) { [] }
+      let(:robots_txt_content) { "User-agent: *\nAllow: *\n" }
+      let(:crawl_config) do
+        Crawler::API::Config.new(
+          crawl_configuration.merge(
+            max_crawl_depth: 1,
+            sitemap_discovery_disabled: false
+          )
+        )
+      end
+
+      it 'should log warning and exit early from enqueue_sitemaps' do
+        expect(system_logger).to receive(:warn).with('No sitemap found in robots.txt')
+        coordinator.send(:enqueue_sitemaps)
+        # Outcome should not be set - crawl should continue with seed URLs
+        expect(coordinator.crawl_results[Crawler::Coordinator::CRAWL_STAGE_PRIMARY][:outcome]).to be_nil
+      end
+
+      it 'should not add any sitemap URLs to the backlog' do
+        allow(system_logger).to receive(:warn)
+        # Should still add user-configured sitemap_urls if any exist (in this case, there are none)
+        # But should not add any auto-discovered URLs
+        expect(coordinator).not_to receive(:add_urls_to_backlog)
+        coordinator.send(:enqueue_sitemaps)
+      end
+    end
+
+    context 'when depth is 1 but user-configured sitemaps exist' do
+      let(:robots_txt_content) { "User-agent: *\nAllow: *\n" }
+      let(:crawl_config) do
+        Crawler::API::Config.new(
+          crawl_configuration.merge(
+            max_crawl_depth: 1,
+            sitemap_discovery_disabled: false
+          )
+        )
+      end
+
+      it 'should not exit early when there are user-configured sitemaps' do
+        expect(system_logger).not_to receive(:warn).with('No sitemap found in robots.txt')
+        expect(events).to receive(:url_discover).exactly(sitemap_urls.count).times
+        expect(events).to receive(:url_seed).exactly(sitemap_urls.count).times
+        coordinator.send(:enqueue_sitemaps)
+      end
+    end
+
+    context 'when depth is 1 but robots.txt has sitemaps' do
+      let(:sitemap_urls) { [] }
+      let(:crawl_config) do
+        Crawler::API::Config.new(
+          crawl_configuration.merge(
+            max_crawl_depth: 1,
+            sitemap_discovery_disabled: false
+          )
+        )
+      end
+
+      it 'should not exit early when sitemaps are found in robots.txt' do
+        expect(system_logger).not_to receive(:warn).with('No sitemap found in robots.txt')
+        expect(events).to receive(:url_discover).exactly(1).times
+        expect(events).to receive(:url_seed).exactly(1).times
+        coordinator.send(:enqueue_sitemaps)
+      end
+    end
   end
 end

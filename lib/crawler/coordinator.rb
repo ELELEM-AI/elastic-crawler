@@ -220,6 +220,13 @@ module Crawler
       return if config.sitemap_discovery_disabled
 
       valid_auto_discovered_sitemap_urls = fetch_valid_auto_discovered_sitemap_urls!
+
+      # If depth is 1, auto sitemap discovery is enabled, and no sitemaps found, log warning and exit early
+      if config.max_crawl_depth == 1 && valid_auto_discovered_sitemap_urls.empty? && config.sitemap_urls.empty?
+        system_logger.warn('No sitemap found in robots.txt')
+        return
+      end
+
       return unless valid_auto_discovered_sitemap_urls.any?
 
       system_logger.debug(

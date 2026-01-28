@@ -303,4 +303,62 @@ RSpec.describe 'robots.txt support' do
       end
     end
   end
+
+  #-------------------------------------------------------------------------------------------------
+  context 'when depth is 1 and no sitemap in robots.txt' do
+    let(:site) do
+      Faux.site do
+        robots do
+          user_agent '*'
+          disallow '/restricted'
+        end
+
+        page '/' do
+          body do
+            link_to '/page1'
+          end
+        end
+
+        page '/page1'
+      end
+    end
+
+    it 'should exit early with warning when sitemap discovery is enabled' do
+      expect_any_instance_of(Crawler::Logging::CrawlLogger).to receive(:warn).with(
+        'No sitemap found in robots.txt'
+      ).at_least(:once)
+
+      results = FauxCrawl.run(site, max_crawl_depth: 1)
+
+      # Should only crawl the seed URL since depth is 1 and no sitemap is available
+      expect(results).to have_only_these_results [
+        mock_response(url: 'http://127.0.0.1:9393/', status_code: 200)
+      ]
+    end
+
+    it 'should not exit early when sitemap discovery is disabled' do
+      expect_any_instance_of(Crawler::Logging::CrawlLogger).not_to receive(:warn).with(
+        'No sitemap found in robots.txt'
+      )
+
+      results = FauxCrawl.run(site, max_crawl_depth: 1, sitemap_discovery_disabled: true)
+
+      expect(results).to have_only_these_results [
+        mock_response(url: 'http://127.0.0.1:9393/', status_code: 200)
+      ]
+    end
+
+    it 'should not exit early when depth is greater than 1' do
+      expect_any_instance_of(Crawler::Logging::CrawlLogger).not_to receive(:warn).with(
+        'No sitemap found in robots.txt'
+      )
+
+      results = FauxCrawl.run(site, max_crawl_depth: 2)
+
+      expect(results).to have_only_these_results [
+        mock_response(url: 'http://127.0.0.1:9393/', status_code: 200),
+        mock_response(url: 'http://127.0.0.1:9393/page1', status_code: 200)
+      ]
+    end
+  end
 end
