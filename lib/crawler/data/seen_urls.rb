@@ -11,14 +11,20 @@ module Crawler
     class SeenUrls
       def initialize
         @seen_urls = Concurrent::Set.new
+        @content_urls = Concurrent::Set.new
       end
 
       def clear
         @seen_urls.clear
+        @content_urls.clear
       end
 
       def count
         @seen_urls.size
+      end
+
+      def content_count
+        @content_urls.size
       end
 
       def delete(url)
@@ -33,8 +39,10 @@ module Crawler
       # Tries to add an item to the set
       # Returns +true+ if this is a new URL and we should visit it
       # Returns +false+ if we have already seen this URL
-      def add?(url)
-        !!@seen_urls.add?(url_hash(url))
+      def add?(url, type: nil)
+        hash = url_hash(url)
+        @content_urls.add?(hash) if type == :content
+        !!@seen_urls.add?(hash)
       end
 
       private
