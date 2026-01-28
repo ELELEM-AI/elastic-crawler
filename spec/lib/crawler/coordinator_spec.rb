@@ -897,16 +897,17 @@ RSpec.describe(Crawler::Coordinator) do
         )
       end
 
-      it 'should exit early with warning message' do
+      it 'should log warning and exit early from enqueue_sitemaps' do
         expect(system_logger).to receive(:warn).with('No sitemap found in robots.txt')
         coordinator.send(:enqueue_sitemaps)
-        expect(coordinator.crawl_results[Crawler::Coordinator::CRAWL_STAGE_PRIMARY]).to eq(
-          { outcome: :warning, message: 'No sitemap found in robots.txt' }
-        )
+        # Outcome should not be set - crawl should continue with seed URLs
+        expect(coordinator.crawl_results[Crawler::Coordinator::CRAWL_STAGE_PRIMARY][:outcome]).to be_nil
       end
 
-      it 'should not add any URLs to the backlog' do
+      it 'should not add any sitemap URLs to the backlog' do
         allow(system_logger).to receive(:warn)
+        # Should still add user-configured sitemap_urls if any exist (in this case, there are none)
+        # But should not add any auto-discovered URLs
         expect(coordinator).not_to receive(:add_urls_to_backlog)
         coordinator.send(:enqueue_sitemaps)
       end
